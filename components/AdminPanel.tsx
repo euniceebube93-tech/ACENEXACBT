@@ -38,7 +38,7 @@ export const AdminPanel: React.FC<Props> = ({ onBack, theme, toggleTheme, isOnli
       amount: '3000',
       fullName: '',
       phoneNumber: '',
-      examType: 'BOTH' as 'JAMB' | 'WAEC' | 'KIDS' | 'BOTH'
+      examType: 'BOTH' as 'JAMB' | 'WAEC' | 'BOTH'
   });
   const [lastGeneratedToken, setLastGeneratedToken] = useState('');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
@@ -106,7 +106,7 @@ export const AdminPanel: React.FC<Props> = ({ onBack, theme, toggleTheme, isOnli
   }, [searchTerm, allQuestions, activeTab]);
 
   // Update default amount when exam type changes
-  const handleExamTypeChange = (type: 'JAMB' | 'WAEC' | 'KIDS' | 'BOTH') => {
+  const handleExamTypeChange = (type: 'JAMB' | 'WAEC' | 'BOTH') => {
       let amount = '3000';
       if (type === 'JAMB') amount = '1500';
       if (type === 'WAEC') amount = '1500';
@@ -496,8 +496,8 @@ export const AdminPanel: React.FC<Props> = ({ onBack, theme, toggleTheme, isOnli
                     <div className="space-y-6">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                             {Object.entries(stats).map(([sub, counts]) => {
-                                const c = counts as { JAMB: number, WAEC: number, KIDS: number };
-                                const total = c.JAMB + c.WAEC + c.KIDS;
+                                const c = counts as { JAMB: number, WAEC: number };
+                                const total = c.JAMB + c.WAEC;
                                 return (
                                 <div key={sub} className={`p-4 md:p-6 rounded-lg border-b-4 text-center bg-white dark:bg-gray-800 shadow-sm transition-transform hover:-translate-y-1 ${total >= 20 ? 'border-green-500' : 'border-orange-500'}`}>
                                     <Database className={`mx-auto mb-2 ${total >= 20 ? 'text-green-500' : 'text-orange-500'}`} />
@@ -505,7 +505,6 @@ export const AdminPanel: React.FC<Props> = ({ onBack, theme, toggleTheme, isOnli
                                     <div className="flex flex-wrap justify-center gap-1 my-2 text-[10px] font-mono">
                                         <span className="bg-green-100 text-green-800 px-1 rounded">J: {c.JAMB}</span>
                                         <span className="bg-blue-100 text-blue-800 px-1 rounded">W: {c.WAEC}</span>
-                                        <span className="bg-purple-100 text-purple-800 px-1 rounded">K: {c.KIDS}</span>
                                     </div>
                                     <p className={`text-[10px] md:text-xs uppercase font-bold tracking-wide ${total >= 20 ? 'text-green-600' : 'text-orange-600'}`}>
                                         {total >= 20 ? 'Ready' : 'Low Data'}
@@ -563,7 +562,7 @@ export const AdminPanel: React.FC<Props> = ({ onBack, theme, toggleTheme, isOnli
                                         value={manualTokenData.examType}
                                         onChange={e => handleExamTypeChange(e.target.value as any)}
                                     >
-                                        <option value="BOTH">FULL ACCESS (JAMB + WAEC + KIDS)</option>
+                                        <option value="BOTH">FULL ACCESS (JAMB + WAEC)</option>
                                         <option value="JAMB">JAMB Only</option>
                                         <option value="WAEC">WAEC Only</option>
                                     </select>
@@ -837,7 +836,6 @@ export const AdminPanel: React.FC<Props> = ({ onBack, theme, toggleTheme, isOnli
                          <div className="flex justify-center gap-4 mb-6">
                              <button onClick={() => setTargetExam('JAMB')} className={`px-4 py-2 rounded font-bold ${targetExam === 'JAMB' ? 'bg-green-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>JAMB</button>
                              <button onClick={() => setTargetExam('WAEC')} className={`px-4 py-2 rounded font-bold ${targetExam === 'WAEC' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>WAEC</button>
-                             <button onClick={() => setTargetExam('KIDS')} className={`px-4 py-2 rounded font-bold ${targetExam === 'KIDS' ? 'bg-purple-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>KIDS</button>
                          </div>
                          
                          {activeTab === 'add' && (

@@ -24,20 +24,6 @@ const MOCK_QUESTIONS: Question[] = [
     { id: 'm13', subject: 'Commerce', examType: 'JAMB', text: 'Trade between two countries is called:', optionA: 'Domestic trade', optionB: 'Bilateral trade', optionC: 'Internal trade', optionD: 'Retail trade', correctOption: 'B', explanation: '' },
     { id: 'm14', subject: 'Financial Accounting', examType: 'JAMB', text: 'Assets = Liabilities + ?', optionA: 'Capital', optionB: 'Expense', optionC: 'Revenue', optionD: 'Debtors', correctOption: 'A', explanation: '' },
     { id: 'm15', subject: 'History', examType: 'JAMB', text: 'Nigeria became a republic in:', optionA: '1960', optionB: '1963', optionC: '1979', optionD: '1999', correctOption: 'B', explanation: '' },
-    
-    // KIDS MATHS QUESTIONS
-    { id: 'k1', subject: 'Mathematics', examType: 'KIDS', text: 'What is 5 + 3?', optionA: '6', optionB: '7', optionC: '8', optionD: '9', correctOption: 'C', explanation: '5 plus 3 is 8.' },
-    { id: 'k2', subject: 'Mathematics', examType: 'KIDS', text: 'Which shape has 3 sides?', optionA: 'Square', optionB: 'Circle', optionC: 'Triangle', optionD: 'Rectangle', correctOption: 'C', explanation: 'A triangle has three sides.' },
-    { id: 'k3', subject: 'Mathematics', examType: 'KIDS', text: '10 - 4 = ?', optionA: '5', optionB: '6', optionC: '7', optionD: '4', correctOption: 'B', explanation: '10 minus 4 equals 6.' },
-    { id: 'k4', subject: 'Mathematics', examType: 'KIDS', text: 'Which number is larger: 15 or 51?', optionA: '15', optionB: '51', optionC: 'They are equal', optionD: '0', correctOption: 'B', explanation: '51 has 5 tens, 15 has 1 ten.' },
-    { id: 'k5', subject: 'Mathematics', examType: 'KIDS', text: 'What comes next: 2, 4, 6, __?', optionA: '7', optionB: '9', optionC: '8', optionD: '10', correctOption: 'C', explanation: 'We are counting by 2s.' },
-    { id: 'k6', subject: 'Mathematics', examType: 'KIDS', text: 'How many fingers do you have on one hand?', optionA: '4', optionB: '5', optionC: '6', optionD: '10', correctOption: 'B', explanation: 'One hand typically has 5 fingers.' },
-    { id: 'k7', subject: 'Mathematics', examType: 'KIDS', text: '2 x 3 = ?', optionA: '5', optionB: '6', optionC: '23', optionD: '1', correctOption: 'B', explanation: '2 times 3 is 6.' },
-    { id: 'k8', subject: 'Mathematics', examType: 'KIDS', text: 'If you have 2 apples and get 2 more, how many do you have?', optionA: '2', optionB: '3', optionC: '4', optionD: '5', correctOption: 'C', explanation: '2 + 2 = 4.' },
-    { id: 'k9', subject: 'Mathematics', examType: 'KIDS', text: 'What time is it when the big hand is on 12 and small hand is on 3?', optionA: '3 o\'clock', optionB: '12 o\'clock', optionC: '6 o\'clock', optionD: '9 o\'clock', correctOption: 'A', explanation: 'It is 3:00.' },
-    { id: 'k10', subject: 'Mathematics', examType: 'KIDS', text: 'Which is an even number?', optionA: '1', optionB: '3', optionC: '4', optionD: '5', correctOption: 'C', explanation: 'Numbers ending in 0, 2, 4, 6, 8 are even.' },
-    { id: 'k11', subject: 'Mathematics', examType: 'KIDS', text: 'Double of 5 is?', optionA: '10', optionB: '15', optionC: '55', optionD: '20', correctOption: 'A', explanation: '5 + 5 = 10.' },
-    { id: 'k12', subject: 'Mathematics', examType: 'KIDS', text: 'Half of 10 is?', optionA: '2', optionB: '5', optionC: '4', optionD: '6', correctOption: 'B', explanation: '10 divided by 2 is 5.' },
 ];
 
 const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 3000) => {
@@ -183,14 +169,13 @@ export const resetDatabase = async (clearAll: boolean = false) => {
 
 export const getBankStats = () => {
     const SUBJECTS: Subject[] = ['English', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Economics', 'Government', 'Literature', 'CRS', 'Agricultural Science', 'Geography', 'Commerce', 'Financial Accounting', 'Civic Education', 'Further Mathematics', 'History'];
-    const stats: Record<string, { JAMB: number, WAEC: number, KIDS: number }> = {};
+    const stats: Record<string, { JAMB: number, WAEC: number }> = {};
   
     SUBJECTS.forEach(sub => {
         const subQs = GLOBAL_QUESTION_BANK.filter(q => q.subject === sub);
         stats[sub] = {
             JAMB: subQs.filter(q => q.examType === 'JAMB').length,
-            WAEC: subQs.filter(q => q.examType === 'WAEC').length,
-            KIDS: subQs.filter(q => q.examType === 'KIDS').length
+            WAEC: subQs.filter(q => q.examType === 'WAEC').length
         };
     });
     return stats;
@@ -275,11 +260,6 @@ export const startExam = (selectedElectives: Subject[], examType: ExamType): Exa
       subjects = ['English', ...electives];
       duration = 7200; 
       qCount = 40;
-  } else if (examType === 'KIDS') {
-      // KIDS Mode configuration
-      subjects = ['Mathematics'];
-      duration = 1800; // 30 minutes
-      qCount = 20; // Fewer questions for kids
   } else {
       // WAEC
       subjects = [...selectedElectives];

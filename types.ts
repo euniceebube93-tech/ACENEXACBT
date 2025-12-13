@@ -17,7 +17,7 @@ export type Subject =
   | 'Further Mathematics'
   | 'History';
 
-export type ExamType = 'JAMB' | 'WAEC' | 'KIDS';
+export type ExamType = 'JAMB' | 'WAEC';
 
 export interface Question {
   id: string;

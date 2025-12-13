@@ -8,7 +8,7 @@ export interface User {
   fullName?: string;
   regNumber?: string;
   isTokenLogin?: boolean;
-  allowedExamType?: 'JAMB' | 'WAEC' | 'BOTH' | 'KIDS';
+  allowedExamType?: 'JAMB' | 'WAEC' | 'BOTH';
 }
 
 export interface TokenInfo {

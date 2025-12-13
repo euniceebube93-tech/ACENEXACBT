@@ -52,24 +52,16 @@ export const SubjectSelection: React.FC<Props> = ({ onStartExam, hasSavedSession
   // Reset selection when exam type changes
   useEffect(() => {
       setSelected([]);
-      if (examType === 'KIDS') {
-          // Auto select Mathematics for Kids
-          setSelected(['Mathematics']);
-      }
   }, [examType]);
 
   // Constraints
   const JAMB_ELECTIVES_COUNT = 3;
   const WAEC_SUBJECT_COUNT = 1; // Single subject exam
-  const KIDS_SUBJECT_COUNT = 1;
 
-  const targetCount = examType === 'JAMB' ? JAMB_ELECTIVES_COUNT : (examType === 'KIDS' ? KIDS_SUBJECT_COUNT : WAEC_SUBJECT_COUNT);
+  const targetCount = examType === 'JAMB' ? JAMB_ELECTIVES_COUNT : WAEC_SUBJECT_COUNT;
   const isJamb = examType === 'JAMB';
-  const isKids = examType === 'KIDS';
 
   const toggleSubject = (sub: Subject) => {
-    if (isKids) return; // Kids mode has fixed subject
-
     if (!isJamb) {
         // WAEC: Single Selection Mode (Select one, deselect others)
         if (selected.includes(sub)) {
@@ -115,24 +107,20 @@ export const SubjectSelection: React.FC<Props> = ({ onStartExam, hasSavedSession
     <button
         key={sub}
         onClick={() => toggleSubject(sub)}
-        disabled={isKids && sub === 'Mathematics'}
         className={`
             p-3 md:p-4 rounded-lg border text-left text-xs md:text-sm transition-all relative font-medium active:scale-[0.98] flex items-center justify-between shadow-sm
             ${selected.includes(sub) 
             ? isJamb 
                 ? 'bg-green-50 dark:bg-green-900/30 border-green-500 text-green-900 dark:text-green-100 ring-1 ring-green-500' 
-                : isKids 
-                    ? 'bg-purple-50 dark:bg-purple-900/30 border-purple-500 text-purple-900 dark:text-purple-100 ring-1 ring-purple-500' 
-                    : 'bg-blue-50 dark:bg-blue-900/30 border-blue-500 text-blue-900 dark:text-blue-100 ring-1 ring-blue-500'
+                : 'bg-blue-50 dark:bg-blue-900/30 border-blue-500 text-blue-900 dark:text-blue-100 ring-1 ring-blue-500'
             : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
             }
         `}
     >
         <span className="truncate mr-2 font-semibold flex items-center gap-2">
-            {isKids && sub === 'Mathematics' && <Calculator size={16} />}
             {sub}
         </span>
-        {selected.includes(sub) && <CheckCircle size={16} className={isJamb ? "text-green-600 dark:text-green-400" : (isKids ? "text-purple-600" : "text-blue-600 dark:text-blue-400")} />}
+        {selected.includes(sub) && <CheckCircle size={16} className={isJamb ? "text-green-600 dark:text-green-400" : "text-blue-600 dark:text-blue-400"} />}
     </button>
   );
 
@@ -145,18 +133,18 @@ export const SubjectSelection: React.FC<Props> = ({ onStartExam, hasSavedSession
         initialName={user.fullName}
       />
 
-      <div className={`bg-white dark:bg-gray-800 w-full md:max-w-5xl md:rounded-xl shadow-2xl overflow-hidden mb-0 md:mb-8 relative border-t-8 transition-colors duration-500 flex flex-col h-full md:h-auto ${isJamb ? 'border-green-600' : (isKids ? 'border-purple-600' : 'border-blue-600')}`}>
+      <div className={`bg-white dark:bg-gray-800 w-full md:max-w-5xl md:rounded-xl shadow-2xl overflow-hidden mb-0 md:mb-8 relative border-t-8 transition-colors duration-500 flex flex-col h-full md:h-auto ${isJamb ? 'border-green-600' : 'border-blue-600'}`}>
         
         {/* HEADER */}
-        <div className={`p-4 md:p-6 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-colors duration-500 shrink-0 ${isJamb ? 'bg-green-900' : (isKids ? 'bg-purple-800' : 'bg-blue-900')}`}>
+        <div className={`p-4 md:p-6 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-colors duration-500 shrink-0 ${isJamb ? 'bg-green-900' : 'bg-blue-900'}`}>
             <div className="flex items-center gap-3 md:gap-4 w-full md:w-auto justify-between md:justify-start">
                 <div className="flex items-center gap-3">
-                    <div className={`bg-white p-1.5 md:p-2 rounded-full border-2 ${isJamb ? 'border-yellow-500' : (isKids ? 'border-pink-400' : 'border-white')}`}>
-                        {isKids ? <Star className="text-purple-600 w-6 h-6 md:w-8 md:h-8" fill="gold" /> : <GraduationCap className={`${isJamb ? 'text-green-800' : 'text-blue-800'} w-6 h-6 md:w-8 md:h-8`} />}
+                    <div className={`bg-white p-1.5 md:p-2 rounded-full border-2 ${isJamb ? 'border-yellow-500' : 'border-white'}`}>
+                        <GraduationCap className={`${isJamb ? 'text-green-800' : 'text-blue-800'} w-6 h-6 md:w-8 md:h-8`} />
                     </div>
                     <div>
                         <h1 className="text-xl md:text-2xl font-bold tracking-tight">EBUS EDU</h1>
-                        <p className={`text-[10px] md:text-xs font-semibold uppercase tracking-wider ${isKids ? 'text-pink-200' : 'text-yellow-400'}`}>{examType} CBT Portal</p>
+                        <p className={`text-[10px] md:text-xs font-semibold uppercase tracking-wider text-yellow-400`}>{examType} CBT Portal</p>
                     </div>
                 </div>
                 {/* Mobile Logout Button */}
@@ -191,11 +179,11 @@ export const SubjectSelection: React.FC<Props> = ({ onStartExam, hasSavedSession
         <div className="flex border-b border-gray-200 dark:border-gray-700 shrink-0 overflow-x-auto whitespace-nowrap">
             <button 
                 onClick={() => setExamType('JAMB')}
-                disabled={user.allowedExamType === 'WAEC' || user.allowedExamType === 'KIDS'}
+                disabled={user.allowedExamType === 'WAEC'}
                 className={`flex-1 py-3 md:py-4 px-4 text-center font-bold text-xs md:text-sm transition-all flex items-center justify-center gap-2 ${
                     isJamb 
                         ? 'text-green-700 dark:text-green-400 border-b-4 border-green-600 bg-green-50 dark:bg-green-900/20' 
-                        : user.allowedExamType === 'WAEC' || user.allowedExamType === 'KIDS'
+                        : user.allowedExamType === 'WAEC'
                             ? 'text-gray-300 dark:text-gray-700 cursor-not-allowed bg-gray-50 dark:bg-gray-800/50'
                             : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
                 }`}
@@ -204,29 +192,16 @@ export const SubjectSelection: React.FC<Props> = ({ onStartExam, hasSavedSession
             </button>
             <button 
                 onClick={() => setExamType('WAEC')}
-                disabled={user.allowedExamType === 'JAMB' || user.allowedExamType === 'KIDS'}
+                disabled={user.allowedExamType === 'JAMB'}
                 className={`flex-1 py-3 md:py-4 px-4 text-center font-bold text-xs md:text-sm transition-all flex items-center justify-center gap-2 ${
                     examType === 'WAEC'
                         ? 'text-blue-700 dark:text-blue-400 border-b-4 border-blue-600 bg-blue-50 dark:bg-blue-900/20' 
-                        : user.allowedExamType === 'JAMB' || user.allowedExamType === 'KIDS'
+                        : user.allowedExamType === 'JAMB'
                             ? 'text-gray-300 dark:text-gray-700 cursor-not-allowed bg-gray-50 dark:bg-gray-800/50'
                             : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
                 }`}
             >
                 {user.allowedExamType !== 'BOTH' && user.allowedExamType !== 'WAEC' && <Lock size={12}/>} WAEC SSCE
-            </button>
-            <button 
-                onClick={() => setExamType('KIDS')}
-                disabled={user.allowedExamType === 'JAMB' || user.allowedExamType === 'WAEC'}
-                className={`flex-1 py-3 md:py-4 px-4 text-center font-bold text-xs md:text-sm transition-all flex items-center justify-center gap-2 ${
-                    isKids
-                        ? 'text-purple-700 dark:text-purple-400 border-b-4 border-purple-600 bg-purple-50 dark:bg-purple-900/20' 
-                        : user.allowedExamType !== 'BOTH' && user.allowedExamType !== 'KIDS'
-                            ? 'text-gray-300 dark:text-gray-700 cursor-not-allowed bg-gray-50 dark:bg-gray-800/50'
-                            : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
-                }`}
-            >
-                 {user.allowedExamType !== 'BOTH' && user.allowedExamType !== 'KIDS' && <Lock size={12}/>} Kids Math
             </button>
         </div>
 
@@ -235,10 +210,10 @@ export const SubjectSelection: React.FC<Props> = ({ onStartExam, hasSavedSession
           <div className="flex flex-col h-full">
             <div className="flex justify-between items-end mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
                 <h2 className="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                    {isJamb ? <CheckCircle size={20} className="text-green-600"/> : (isKids ? <PartyPopper size={20} className="text-purple-600"/> : <Layers size={20} className="text-blue-600"/>)}
-                    {isJamb ? 'Combination' : (isKids ? 'Fun Quiz Mode' : 'Choose Subject')}
+                    {isJamb ? <CheckCircle size={20} className="text-green-600"/> : <Layers size={20} className="text-blue-600"/>}
+                    {isJamb ? 'Combination' : 'Choose Subject'}
                 </h2>
-                <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded ${isJamb ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : (isKids ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300')}`}>
+                <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded ${isJamb ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'}`}>
                     {isJamb ? 'Multi-Subject' : 'Single Subject'}
                 </span>
             </div>
@@ -279,9 +254,9 @@ export const SubjectSelection: React.FC<Props> = ({ onStartExam, hasSavedSession
                 <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2 flex justify-between text-sm md:text-base items-center">
                     <span className="flex items-center gap-2">
                         {isJamb && <span className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold">2</span>}
-                        {isJamb ? `Select ${targetCount} Electives` : (isKids ? 'Ready for Quiz?' : 'Select One Subject')}
+                        {isJamb ? `Select ${targetCount} Electives` : 'Select One Subject'}
                     </span>
-                    <span className={`text-xs font-bold px-2 py-1 rounded ${isValid ? (isJamb ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : (isKids ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300')) : 'bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-300'}`}>
+                    <span className={`text-xs font-bold px-2 py-1 rounded ${isValid ? (isJamb ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300') : 'bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-300'}`}>
                         {selected.length}/{targetCount}
                     </span>
                 </h3>
@@ -290,15 +265,6 @@ export const SubjectSelection: React.FC<Props> = ({ onStartExam, hasSavedSession
                     {isJamb ? (
                         <div className="grid grid-cols-2 gap-2">
                             {JAMB_SUBJECTS.map(renderSubjectButton)}
-                        </div>
-                    ) : isKids ? (
-                        <div className="space-y-4">
-                             <div className="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-xl border border-purple-100 dark:border-purple-800 text-center">
-                                 <Calculator className="mx-auto text-purple-500 mb-2 w-12 h-12" />
-                                 <h4 className="font-bold text-purple-900 dark:text-purple-200 text-lg">Mathematics Quiz</h4>
-                                 <p className="text-sm text-purple-700 dark:text-purple-300 mb-4">Practice your counting, shapes, and numbers!</p>
-                                 <div className="flex justify-center">{renderSubjectButton('Mathematics')}</div>
-                             </div>
                         </div>
                     ) : (
                         // WAEC Grouped Layout
@@ -329,22 +295,22 @@ export const SubjectSelection: React.FC<Props> = ({ onStartExam, hasSavedSession
                 </div>
             </div>
 
-            {/* Common Start Button for BOTH Modes */}
+            {/* Common Start Button */}
             <Button 
                 onClick={() => onStartExam(selected)} 
                 disabled={!isValid}
                 className={`w-full py-4 text-lg font-bold shadow-md transition-all transform hover:scale-[1.01] flex items-center justify-center gap-2 shrink-0 ${
                     isValid 
-                    ? (isJamb ? 'bg-green-700 hover:bg-green-800 border-green-800 text-white' : (isKids ? 'bg-purple-600 hover:bg-purple-700 border-purple-700 text-white' : 'bg-blue-700 hover:bg-blue-800 border-blue-800 text-white'))
+                    ? (isJamb ? 'bg-green-700 hover:bg-green-800 border-green-800 text-white' : 'bg-blue-700 hover:bg-blue-800 border-blue-800 text-white')
                     : 'bg-gray-300 dark:bg-gray-700 cursor-not-allowed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400'
                 }`}
             >
                 <MousePointer2 size={24} />
-                {isValid ? `Start ${isJamb ? 'JAMB' : (isKids ? 'Quiz' : selected[0] + ' Exam')}` : 'Select Subject to Begin'}
+                {isValid ? `Start ${isJamb ? 'JAMB' : selected[0] + ' Exam'}` : 'Select Subject to Begin'}
             </Button>
           </div>
 
-          {/* RIGHT: History (Hidden on small mobile screens to save space? No, keep it but make it scrollable) */}
+          {/* RIGHT: History */}
           <div className="bg-gray-50 dark:bg-gray-700/30 p-4 md:p-6 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col h-full min-h-[300px]">
              <h2 className="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2 border-b border-gray-200 dark:border-gray-600 pb-2">
                  <History className="text-gray-500 dark:text-gray-400"/> Recent Results
@@ -360,17 +326,16 @@ export const SubjectSelection: React.FC<Props> = ({ onStartExam, hasSavedSession
                      {history.map((res) => {
                          const rType = res.session.examType || 'JAMB';
                          const isResJamb = rType === 'JAMB';
-                         const isResKids = rType === 'KIDS';
                          
                          return (
-                         <div key={res.id} className={`bg-white dark:bg-gray-800 p-4 rounded-lg border-l-4 ${isResJamb ? 'border-l-green-500' : (isResKids ? 'border-l-purple-500' : 'border-l-blue-500')} border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow group relative`}>
+                         <div key={res.id} className={`bg-white dark:bg-gray-800 p-4 rounded-lg border-l-4 ${isResJamb ? 'border-l-green-500' : 'border-l-blue-500'} border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow group relative`}>
                              <div className="flex justify-between items-start mb-2 border-b border-gray-100 dark:border-gray-700 pb-2">
                                  <div className="flex flex-col">
                                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">{formatDate(res.timestamp)}</span>
-                                     <span className={`text-[10px] font-bold px-1 rounded w-fit mt-1 ${isResJamb ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : (isResKids ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300')}`}>{rType}</span>
+                                     <span className={`text-[10px] font-bold px-1 rounded w-fit mt-1 ${isResJamb ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'}`}>{rType}</span>
                                  </div>
                                  <div className="text-right">
-                                     <span className={`block text-2xl font-black leading-none ${isResJamb ? 'text-green-700 dark:text-green-400' : (isResKids ? 'text-purple-600' : 'text-blue-700 dark:text-blue-400')}`}>
+                                     <span className={`block text-2xl font-black leading-none ${isResJamb ? 'text-green-700 dark:text-green-400' : 'text-blue-700 dark:text-blue-400'}`}>
                                          {res.aggregateScore}
                                      </span>
                                      <span className="text-[10px] uppercase text-gray-400 dark:text-gray-500 font-bold">/ 400 Agg.</span>
@@ -393,7 +358,7 @@ export const SubjectSelection: React.FC<Props> = ({ onStartExam, hasSavedSession
                              <div className="absolute inset-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
                                  <button 
                                     onClick={() => onReview(res)}
-                                    className={`${isResJamb ? 'bg-green-700 hover:bg-green-600' : (isResKids ? 'bg-purple-600 hover:bg-purple-500' : 'bg-blue-700 hover:bg-blue-600')} text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg transform scale-90 group-hover:scale-100 transition-transform flex items-center gap-2`}
+                                    className={`${isResJamb ? 'bg-green-700 hover:bg-green-600' : 'bg-blue-700 hover:bg-blue-600'} text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg transform scale-90 group-hover:scale-100 transition-transform flex items-center gap-2`}
                                  >
                                      <Eye size={16}/> Review Corrections
                                  </button>

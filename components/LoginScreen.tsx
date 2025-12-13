@@ -19,13 +19,12 @@ interface PackageOption {
     id: PackageType;
     title: string;
     price: number;
-    desc: string;
 }
 
 const PACKAGES: PackageOption[] = [
-    { id: 'JAMB', title: 'JAMB Only', price: 1500, desc: 'Access to JAMB UTME Past Questions' },
-    { id: 'WAEC', title: 'WAEC Only', price: 1500, desc: 'Access to WAEC SSCE Past Questions' },
-    { id: 'BOTH', title: 'Full Access', price: 3000, desc: 'JAMB + WAEC + Kids Math' },
+    { id: 'JAMB', title: 'JAMB Only', price: 1500 },
+    { id: 'WAEC', title: 'WAEC Only', price: 1500 },
+    { id: 'BOTH', title: 'Full Access', price: 3000 },
 ];
 
 export const LoginScreen: React.FC<Props> = ({ onLogin, theme, toggleTheme, isOnline }) => {
@@ -78,9 +77,7 @@ export const LoginScreen: React.FC<Props> = ({ onLogin, theme, toggleTheme, isOn
           let initialExamType: ExamType = 'JAMB';
           if (user.allowedExamType === 'WAEC') {
               initialExamType = 'WAEC';
-          } else if (user.allowedExamType === 'KIDS') {
-              initialExamType = 'KIDS';
-          }
+          } 
           
           onLogin(user, initialExamType); 
       } catch (err: any) {
@@ -373,7 +370,6 @@ export const LoginScreen: React.FC<Props> = ({ onLogin, theme, toggleTheme, isOn
                             {paymentStep === 'details' ? (
                                 <>
                                     <form onSubmit={handleProceedToPayment} className="space-y-4">
-                                        
                                         <div className="mb-4">
                                             <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-3">Select Package</h3>
                                             <div className="grid grid-cols-1 gap-2">
@@ -383,16 +379,20 @@ export const LoginScreen: React.FC<Props> = ({ onLogin, theme, toggleTheme, isOn
                                                         onClick={() => setSelectedPackage(pkg.id)}
                                                         className={`p-3 rounded-lg border-2 cursor-pointer transition-all flex justify-between items-center ${selectedPackage === pkg.id ? 'border-green-600 bg-green-50 dark:bg-green-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-green-300'}`}
                                                     >
-                                                        <div>
-                                                            <p className={`font-bold text-sm ${selectedPackage === pkg.id ? 'text-green-800 dark:text-green-300' : 'text-gray-700 dark:text-gray-200'}`}>{pkg.title}</p>
-                                                            <p className="text-[10px] text-gray-500 dark:text-gray-400">{pkg.desc}</p>
-                                                        </div>
-                                                        <div className="text-right">
+                                                        <p className={`font-bold text-sm ${selectedPackage === pkg.id ? 'text-green-800 dark:text-green-300' : 'text-gray-700 dark:text-gray-200'}`}>{pkg.title}</p>
+                                                        <div className="flex items-center gap-2">
                                                             <p className="font-black text-sm text-gray-800 dark:text-white">₦{pkg.price.toLocaleString()}</p>
-                                                            {selectedPackage === pkg.id && <CheckCircle size={14} className="ml-auto text-green-600"/>}
+                                                            {selectedPackage === pkg.id && <CheckCircle size={14} className="text-green-600"/>}
                                                         </div>
                                                     </div>
                                                 ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded border-2 border-green-200 dark:border-green-800 text-center mb-4">
+                                            <div className="flex items-center justify-center gap-2 mb-1 text-green-800 dark:text-green-300 font-bold uppercase text-sm">
+                                                <GraduationCap size={18} />
+                                                Includes JAMB & WAEC
                                             </div>
                                         </div>
 
