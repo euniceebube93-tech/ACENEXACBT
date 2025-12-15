@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from './Button';
 import { User, loginUser, loginWithToken, verifyPaystackPayment } from '../services/auth';
-import { BookOpen, AlertCircle, Lock, User as UserIcon, HelpCircle, ArrowLeft, GraduationCap, CheckCircle, Moon, Sun, Key, Smartphone, ShieldCheck, CreditCard, ChevronRight, Calendar, Hash, Banknote, Shield, MessageCircle, Copy, Building2, WifiOff, Check } from 'lucide-react';
+import { AlertCircle, Lock, ArrowLeft, GraduationCap, CheckCircle, Moon, Sun, Smartphone, CreditCard, ChevronRight, Banknote, Shield, MessageCircle, Copy, Building2, WifiOff } from 'lucide-react';
 import { ExamType } from '../types';
 import { PAYSTACK_PUBLIC_KEY } from '../services/config';
 import { JambLogo, WaecLogo, JointLogo, AcenexaLogo } from './ExamLogos';
@@ -263,7 +263,7 @@ export const LoginScreen: React.FC<Props> = ({ onLogin, theme, toggleTheme, isOn
             </div>
         </div>
 
-        <div className="flex-1 flex items-center justify-center p-4">
+        <div className="flex-1 flex items-center justify-center p-4 flex-col">
             <div className="bg-white dark:bg-gray-800 w-full max-w-md shadow-2xl rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 transform transition-all mt-4 relative">
                 
                 {/* --- CARD HEADER --- */}

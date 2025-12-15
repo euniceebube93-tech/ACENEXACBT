@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Subject, Question, ExamType } from '../types';
 import { addQuestionToBank, getBankStats, resetDatabase, clearStudentResults, addBulkQuestions, fetchAllQuestions, deleteQuestion } from '../services/db';
 import { registerStudent, getAllStudents, deleteStudent, User, changePassword, generateManualToken, generateLocalTokenImmediate, getAllTokens, TokenInfo, updateAdminCredentials, toggleTokenStatus, resetTokenDevice, deleteToken } from '../services/auth';
-import { LogOut, Upload, Save, Database, FileText, CheckCircle, AlertTriangle, RefreshCw, Trash2, ShieldAlert, Users, Plus, Settings, List, Moon, Sun, Search, GraduationCap, Banknote, Copy, Check, Ban, Phone, User as UserIcon, Smartphone, WifiOff } from 'lucide-react';
+import { LogOut, Upload, Save, Database, FileText, CheckCircle, AlertTriangle, RefreshCw, Trash2, ShieldAlert, Users, Plus, Settings, List, Moon, Sun, Search, GraduationCap, Banknote, Copy, Check, Ban, Phone, User as UserIcon, Smartphone, WifiOff, X } from 'lucide-react';
 import { Button } from './Button';
 
 interface Props {
@@ -42,11 +42,17 @@ export const AdminPanel: React.FC<Props> = ({ onBack, theme, toggleTheme, isOnli
   });
   const [lastGeneratedToken, setLastGeneratedToken] = useState('');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  
+  // Inline Action States (Replace window.confirm)
+  const [tokenToDelete, setTokenToDelete] = useState<string | null>(null);
+  const [tokenToReset, setTokenToReset] = useState<string | null>(null);
+  const [tokenToToggle, setTokenToToggle] = useState<string | null>(null);
 
   // Question Bank View State
   const [allQuestions, setAllQuestions] = useState<Question[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredQuestions, setFilteredQuestions] = useState<Question[]>([]);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
 
   // Admin Profile Update State
   const [adminProfile, setAdminProfile] = useState({
@@ -144,7 +150,6 @@ export const AdminPanel: React.FC<Props> = ({ onBack, theme, toggleTheme, isOnli
       setIsLoading(true);
 
       // Create a timeout promise that rejects after 8 seconds
-      // Using a shorter timeout here to ensure UI responsiveness
       const timeoutPromise = new Promise((_, reject) => {
           const id = setTimeout(() => {
               clearTimeout(id);
@@ -179,20 +184,17 @@ export const AdminPanel: React.FC<Props> = ({ onBack, theme, toggleTheme, isOnli
               );
               setLastGeneratedToken(fallbackRes.token);
           } else {
-              // Real error
               console.error("Token Generation Failed:", err);
               alert("Generation failed: " + (err.message || "Unknown error"));
           }
       } finally {
           setIsLoading(false);
-          // Clean up form
           setManualTokenData(prev => ({ 
               ...prev, 
               reference: '', 
               fullName: '', 
               phoneNumber: '' 
           }));
-          // Load tokens in background
           loadTokens();
       }
   };
@@ -203,43 +205,90 @@ export const AdminPanel: React.FC<Props> = ({ onBack, theme, toggleTheme, isOnli
           setTimeout(() => setCopiedToken(null), 2000);
       }).catch(err => {
           console.error('Failed to copy: ', err);
-          // Fallback
           alert("Access Code Copied!");
       });
   };
 
-  const handleToggleTokenStatus = async (tokenCode: string, currentStatus: boolean) => {
-      const action = currentStatus ? "DEACTIVATE" : "ACTIVATE";
-      if(confirm(`Are you sure you want to ${action} this token?`)) {
-          try {
-              await toggleTokenStatus(tokenCode, !currentStatus);
-              await loadTokens();
-          } catch(e: any) {
-              alert(e.message);
-          }
+  // --- INLINE ACTION HANDLERS (No window.confirm) ---
+
+  const cancelAction = () => {
+      setTokenToDelete(null);
+      setTokenToReset(null);
+      setTokenToToggle(null);
+  };
+
+  // 1. Reset Device Lock
+  const initiateResetDevice = (e: React.MouseEvent, tokenCode: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setTokenToReset(tokenCode);
+      setTokenToToggle(null);
+      setTokenToDelete(null);
+  };
+
+  const confirmResetDevice = async (tokenCode: string) => {
+      setTokenToReset(null);
+      try {
+          await resetTokenDevice(tokenCode);
+          await loadTokens();
+      } catch(e: any) {
+          alert("Failed: " + e.message);
       }
   };
 
-  const handleResetDevice = async (tokenCode: string) => {
-    if(confirm(`Unlock device binding for token ${tokenCode}? This allows the user to login on a new device once.`)) {
-        try {
-            await resetTokenDevice(tokenCode);
-            await loadTokens();
-            alert("Token device lock reset successfully.");
-        } catch(e: any) {
-            alert(e.message);
-        }
-    }
+  // 2. Toggle Status (Activate/Deactivate)
+  const initiateToggleStatus = (e: React.MouseEvent, tokenCode: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setTokenToToggle(tokenCode);
+      setTokenToReset(null);
+      setTokenToDelete(null);
   };
 
-  const handleDeleteToken = async (tokenCode: string) => {
-      if(confirm(`Are you sure you want to PERMANENTLY DELETE token ${tokenCode}? This cannot be undone.`)) {
-          try {
-              await deleteToken(tokenCode);
-              await loadTokens();
-          } catch(e: any) {
-              alert(e.message);
-          }
+  const confirmToggleStatus = async (tokenCode: string, currentStatus: boolean) => {
+      setTokenToToggle(null);
+      try {
+          await toggleTokenStatus(tokenCode, !currentStatus);
+          await loadTokens();
+      } catch(e: any) {
+          alert("Failed: " + e.message);
+      }
+  };
+
+  // 3. Delete Token
+  const initiateDeleteToken = (e: React.MouseEvent, tokenCode: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setTokenToDelete(tokenCode);
+      setTokenToReset(null);
+      setTokenToToggle(null);
+  };
+
+  const confirmDeleteToken = async (tokenCode: string) => {
+      setTokenToDelete(null);
+      setIsLoading(true);
+      try {
+          await deleteToken(tokenCode);
+          setTokens(prev => prev.filter(t => t.token_code !== tokenCode));
+          await loadTokens();
+      } catch(e: any) {
+          alert("Failed: " + e.message);
+      }
+      setIsLoading(false);
+  };
+
+  // 4. Delete All Questions
+  const handleDeleteAllQuestions = async () => {
+      setIsLoading(true);
+      try {
+          await resetDatabase(true);
+          await loadQuestions();
+          setConfirmDeleteAll(false);
+          alert("All questions deleted successfully.");
+      } catch (e: any) {
+          alert("Failed to delete all: " + e.message);
+      } finally {
+          setIsLoading(false);
       }
   };
 
@@ -252,16 +301,21 @@ export const AdminPanel: React.FC<Props> = ({ onBack, theme, toggleTheme, isOnli
     }
   };
 
-  const handleDeleteQuestion = async (id: string) => {
-      if (confirm("Delete this question? This cannot be undone.")) {
-          try {
-              await deleteQuestion(id);
-              // Refresh
-              setAllQuestions(prev => prev.filter(q => q.id !== id));
-          } catch (e: any) {
-              alert(e.message);
+  const handleDeleteQuestion = (e: React.MouseEvent, id: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      setTimeout(async () => {
+          if (confirm("Delete this question? This cannot be undone.")) {
+              try {
+                  await deleteQuestion(id);
+                  // Refresh UI optimistically
+                  setAllQuestions(prev => prev.filter(q => q.id !== id));
+              } catch (e: any) {
+                  alert("Failed: " + e.message);
+              }
           }
-      }
+      }, 50);
   };
 
   const handleClearProgress = async (username: string) => {
@@ -626,9 +680,11 @@ export const AdminPanel: React.FC<Props> = ({ onBack, theme, toggleTheme, isOnli
                                     <thead className="bg-gray-50 dark:bg-gray-700 text-xs uppercase text-gray-500 sticky top-0">
                                         <tr>
                                             <th className="px-4 py-3">Code</th>
+                                            <th className="px-4 py-3">Name</th>
                                             <th className="px-4 py-3">Details</th>
                                             <th className="px-4 py-3">Status</th>
-                                            <th className="px-4 py-3 text-right">Action</th>
+                                            <th className="px-4 py-3 text-right">Actions</th>
+                                            <th className="px-4 py-3 text-right">Delete</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -646,12 +702,16 @@ export const AdminPanel: React.FC<Props> = ({ onBack, theme, toggleTheme, isOnli
                                                         </button>
                                                     </div>
                                                 </td>
+                                                <td className="px-4 py-3 font-bold text-gray-700 dark:text-gray-300 text-xs">
+                                                    {t.metadata?.full_name || 'N/A'}
+                                                </td>
                                                 <td className="px-4 py-3 text-xs text-gray-500">
-                                                    <div className="font-bold text-gray-700 dark:text-gray-300">{t.metadata?.full_name || 'N/A'} <span className="text-[9px] bg-gray-200 dark:bg-gray-600 px-1 rounded">{t.metadata?.exam_type || 'BOTH'}</span></div>
-                                                    <div className="flex gap-2">
+                                                    <div className="mb-1">
+                                                        <span className="text-[9px] bg-gray-200 dark:bg-gray-600 px-1 rounded font-bold">{t.metadata?.exam_type || 'BOTH'}</span>
+                                                    </div>
+                                                    <div className="flex flex-col gap-1">
                                                         <span className="flex items-center gap-1"><Phone size={10}/> {t.metadata?.phone_number || 'N/A'}</span>
-                                                        <span className="text-gray-400">|</span>
-                                                        <span>Ref: {t.metadata?.payment_ref || 'N/A'}</span>
+                                                        <span className="text-[10px] text-gray-400">Ref: {t.metadata?.payment_ref || 'N/A'}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3">
@@ -663,35 +723,75 @@ export const AdminPanel: React.FC<Props> = ({ onBack, theme, toggleTheme, isOnli
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
-                                                    <div className="flex justify-end gap-2">
-                                                        <button 
-                                                            onClick={() => handleResetDevice(t.token_code)}
-                                                            className="p-1 rounded text-orange-500 hover:bg-orange-50"
-                                                            title="Reset Device Lock"
-                                                        >
-                                                            <Smartphone size={16}/>
-                                                        </button>
-                                                        <button 
-                                                            onClick={() => handleToggleTokenStatus(t.token_code, t.is_active)}
-                                                            className={`p-1 rounded ${t.is_active ? 'text-red-500 hover:bg-red-50' : 'text-green-500 hover:bg-green-50'}`}
-                                                            title={t.is_active ? "Deactivate Token" : "Activate Token"}
-                                                        >
-                                                            {t.is_active ? <Ban size={16}/> : <CheckCircle size={16}/>}
-                                                        </button>
-                                                        <button 
-                                                            onClick={() => handleDeleteToken(t.token_code)}
-                                                            className="p-1 rounded text-red-500 hover:bg-red-50"
-                                                            title="Delete Token"
-                                                        >
-                                                            <Trash2 size={16}/>
-                                                        </button>
-                                                    </div>
+                                                    {tokenToReset === t.token_code ? (
+                                                        <div className="flex justify-end gap-1 relative z-10 animate-in fade-in zoom-in duration-200">
+                                                             <span className="text-[10px] font-bold text-orange-500 self-center mr-1">Unlock?</span>
+                                                             <button type="button" onClick={() => confirmResetDevice(t.token_code)} className="px-2 py-1 rounded bg-orange-500 text-white hover:bg-orange-600 text-xs font-bold shadow-sm">Yes</button>
+                                                             <button type="button" onClick={cancelAction} className="p-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-600"><X size={14}/></button>
+                                                        </div>
+                                                    ) : tokenToToggle === t.token_code ? (
+                                                        <div className="flex justify-end gap-1 relative z-10 animate-in fade-in zoom-in duration-200">
+                                                             <span className="text-[10px] font-bold text-blue-500 self-center mr-1">{t.is_active ? 'Deactivate?' : 'Activate?'}</span>
+                                                             <button type="button" onClick={() => confirmToggleStatus(t.token_code, t.is_active)} className={`px-2 py-1 rounded text-white text-xs font-bold shadow-sm ${t.is_active ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}>Yes</button>
+                                                             <button type="button" onClick={cancelAction} className="p-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-600"><X size={14}/></button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex justify-end gap-2 relative z-10">
+                                                            <button 
+                                                                type="button"
+                                                                onClick={(e) => initiateResetDevice(e, t.token_code)}
+                                                                className="p-2 rounded text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 cursor-pointer transition-colors"
+                                                                title="Reset Device Lock"
+                                                            >
+                                                                <Smartphone size={16} className="pointer-events-none"/>
+                                                            </button>
+                                                            <button 
+                                                                type="button"
+                                                                onClick={(e) => initiateToggleStatus(e, t.token_code)}
+                                                                className={`p-2 rounded cursor-pointer transition-colors ${t.is_active ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20' : 'text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20'}`}
+                                                                title={t.is_active ? "Deactivate Token" : "Activate Token"}
+                                                            >
+                                                                {t.is_active ? <Ban size={16} className="pointer-events-none"/> : <CheckCircle size={16} className="pointer-events-none"/>}
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    {tokenToDelete === t.token_code ? (
+                                                        <div className="flex justify-end gap-1 relative z-10 animate-in fade-in zoom-in duration-200">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => confirmDeleteToken(t.token_code)}
+                                                                className="px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700 text-xs font-bold shadow-sm"
+                                                            >
+                                                                Confirm
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={cancelAction}
+                                                                className="p-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-600"
+                                                            >
+                                                                <X size={14}/>
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex justify-end gap-2 relative z-10">
+                                                            <button 
+                                                                type="button"
+                                                                onClick={(e) => initiateDeleteToken(e, t.token_code)}
+                                                                className="p-2 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer transition-colors"
+                                                                title="Delete Token"
+                                                            >
+                                                                <Trash2 size={16} className="pointer-events-none"/>
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
                                         {tokens.length === 0 && (
                                             <tr>
-                                                <td colSpan={4} className="p-4 text-center text-gray-400 text-xs">No tokens generated yet.</td>
+                                                <td colSpan={6} className="p-4 text-center text-gray-400 text-xs">No tokens generated yet.</td>
                                             </tr>
                                         )}
                                     </tbody>
@@ -703,8 +803,8 @@ export const AdminPanel: React.FC<Props> = ({ onBack, theme, toggleTheme, isOnli
                 
                 {activeTab === 'questions' && (
                      <div className="h-full flex flex-col">
-                        <div className="flex flex-col md:flex-row gap-4 mb-4">
-                            <div className="relative flex-1">
+                        <div className="flex flex-col md:flex-row gap-4 mb-4 items-center">
+                            <div className="relative flex-1 w-full">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                 <input 
                                     type="text"
@@ -714,6 +814,31 @@ export const AdminPanel: React.FC<Props> = ({ onBack, theme, toggleTheme, isOnli
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
+
+                            {confirmDeleteAll ? (
+                                <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right duration-200 bg-red-50 dark:bg-red-900/20 p-1 rounded border border-red-100 dark:border-red-800">
+                                    <span className="text-xs font-bold text-red-600 dark:text-red-400 pl-2">Delete ALL {allQuestions.length}?</span>
+                                    <button 
+                                        onClick={handleDeleteAllQuestions} 
+                                        className="bg-red-600 text-white px-3 py-1.5 rounded text-xs font-bold shadow-sm hover:bg-red-700"
+                                    >
+                                        Yes
+                                    </button>
+                                    <button 
+                                        onClick={() => setConfirmDeleteAll(false)} 
+                                        className="bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 px-3 py-1.5 rounded text-xs font-bold hover:bg-gray-50 dark:hover:bg-gray-600"
+                                    >
+                                        No
+                                    </button>
+                                </div>
+                            ) : (
+                                <button 
+                                    onClick={() => setConfirmDeleteAll(true)}
+                                    className="bg-white dark:bg-gray-800 text-red-500 border border-red-200 dark:border-red-900/30 px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-bold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shadow-sm whitespace-nowrap"
+                                >
+                                    <Trash2 size={16} /> <span className="hidden md:inline">Delete All</span>
+                                </button>
+                            )}
                         </div>
                         <div className="flex-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-auto">
                             <table className="w-full text-sm text-left text-gray-600 dark:text-gray-300 whitespace-nowrap md:whitespace-normal">
@@ -732,7 +857,14 @@ export const AdminPanel: React.FC<Props> = ({ onBack, theme, toggleTheme, isOnli
                                             <td className="px-4 py-3">{q.subject}</td>
                                             <td className="px-4 py-3 truncate max-w-md">{q.text}</td>
                                             <td className="px-4 py-3 text-right">
-                                                <button onClick={() => handleDeleteQuestion(q.id)} className="text-red-500"><Trash2 size={16}/></button>
+                                                <button 
+                                                    type="button"
+                                                    onClick={(e) => handleDeleteQuestion(e, q.id)} 
+                                                    className="p-2 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                    title="Delete Question"
+                                                >
+                                                    <Trash2 size={16} className="pointer-events-none"/>
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}

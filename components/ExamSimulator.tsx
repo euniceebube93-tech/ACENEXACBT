@@ -40,7 +40,7 @@ export const ExamSimulator: React.FC<Props> = ({ session: initialSession, onSubm
   const timeLeftRef = useRef(timeLeft);
   const tabsRef = useRef<HTMLDivElement>(null);
 
-  // Sync state if prop changes (Double safety alongside key prop)
+  // Sync state if prop changes
   useEffect(() => {
       setSession(initialSession);
       setCurrentSubject(initialSession.subjects[0]);
@@ -137,7 +137,7 @@ export const ExamSimulator: React.FC<Props> = ({ session: initialSession, onSubm
   useEffect(() => {
     const handleMove = (e: MouseEvent | TouchEvent) => {
       if (!isDraggingCalc) return;
-      e.preventDefault(); // Prevent scrolling on mobile while dragging
+      e.preventDefault(); 
       
       const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
       const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
@@ -289,11 +289,28 @@ export const ExamSimulator: React.FC<Props> = ({ session: initialSession, onSubm
         const isCurrent = idx === currentQIndex;
         const isMarked = session.markedForReview.includes(qAtIdx.id);
         
-        let bgClass = "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-gray-400";
-        if (isAnswered) bgClass = "bg-green-500 text-white border-green-600";
-        if (isMarked) bgClass = "bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300 border-red-300 dark:border-red-800";
-        if (isAnswered && isMarked) bgClass = "bg-purple-500 text-white border-purple-600";
-        if (isCurrent) bgClass = "bg-blue-600 text-white ring-2 ring-blue-300 dark:ring-blue-800 border-blue-700 z-10 scale-110";
+        // Base classes
+        let btnClasses = "h-10 md:h-9 rounded font-bold text-sm md:text-xs transition-all border shadow-sm flex items-center justify-center relative ";
+
+        // Status Logic (Priority: Answered&Flagged > Flagged > Answered > Default)
+        if (isAnswered && isMarked) {
+            btnClasses += "bg-purple-600 text-white border-purple-700 hover:bg-purple-700";
+        } else if (isMarked) {
+            btnClasses += "bg-red-500 text-white border-red-600 hover:bg-red-600";
+        } else if (isAnswered) {
+            btnClasses += "bg-green-600 text-white border-green-700 hover:bg-green-700";
+        } else {
+            btnClasses += "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-gray-400";
+        }
+
+        // Current Indicator (Ring/Scale override)
+        if (isCurrent) {
+             btnClasses += " ring-2 ring-blue-500 dark:ring-blue-400 ring-offset-2 dark:ring-offset-gray-900 z-10 scale-110 shadow-md";
+             // If not answered/marked, allow blue background for current for better visibility
+             if (!isAnswered && !isMarked) {
+                 btnClasses = btnClasses.replace("bg-white dark:bg-gray-700", "bg-blue-600").replace("text-gray-600 dark:text-gray-300", "text-white");
+             }
+        }
         
         return (
           <button
@@ -305,13 +322,27 @@ export const ExamSimulator: React.FC<Props> = ({ session: initialSession, onSubm
                 }
             }}
             disabled={isNavigating}
-            className={`h-10 md:h-9 rounded font-bold text-sm md:text-xs transition-all border shadow-sm ${bgClass} ${isNavigating ? 'opacity-70 cursor-not-allowed' : ''}`}
+            className={`${btnClasses} ${isNavigating ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
             {idx + 1}
+            {isMarked && !isCurrent && <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></div>}
           </button>
         );
       })}
     </div>
+  );
+
+  const Legend = () => (
+      <div className="mt-8 px-2 border-t dark:border-gray-700 pt-4">
+          <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">Key</h4>
+          <div className="grid grid-cols-2 gap-2 text-[10px] font-medium text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-2"><div className="w-3 h-3 bg-green-600 rounded border border-green-700"></div> Answered</div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 bg-white dark:bg-gray-700 border border-gray-400 dark:border-gray-500 rounded"></div> Unanswered</div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-600 rounded border border-blue-700"></div> Current</div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500 border border-red-600 rounded"></div> Flagged</div>
+              <div className="flex items-center gap-2 col-span-2"><div className="w-3 h-3 bg-purple-600 border border-purple-700 rounded"></div> Answered & Flagged</div>
+          </div>
+      </div>
   );
 
   return (
@@ -530,7 +561,7 @@ export const ExamSimulator: React.FC<Props> = ({ session: initialSession, onSubm
       )}
 
       {showMobileGrid && (
-        <div className="fixed inset-0 bg-black/50 z-40 md:hidden flex justify-end">
+        <div className="fixed inset-0 bg-black/50 z-40 md:hidden flex justify-end animate-in slide-in-from-right duration-200">
             <div className="w-4/5 max-w-sm bg-white dark:bg-gray-800 h-full shadow-2xl p-4 overflow-y-auto">
                 <div className="flex justify-between items-center mb-4 border-b dark:border-gray-700 pb-2">
                     <h3 className="font-bold text-green-900 dark:text-green-400">{currentSubject} Grid</h3>
@@ -539,16 +570,7 @@ export const ExamSimulator: React.FC<Props> = ({ session: initialSession, onSubm
                     </button>
                 </div>
                 {renderQuestionGrid()}
-                
-                <div className="mt-8 px-2 border-t dark:border-gray-700 pt-4">
-                    <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">Key</h4>
-                    <div className="grid grid-cols-2 gap-2 text-[10px] text-gray-600 dark:text-gray-400">
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-green-500 rounded border border-green-600"></div> Answered</div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-white dark:bg-gray-700 border border-gray-400 dark:border-gray-500 rounded"></div> Unanswered</div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-600 rounded"></div> Current</div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 rounded"></div> Flagged</div>
-                    </div>
-                </div>
+                <Legend />
             </div>
         </div>
       )}
@@ -576,25 +598,25 @@ export const ExamSimulator: React.FC<Props> = ({ session: initialSession, onSubm
       </div>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 flex overflow-hidden">
+      <main className="flex-1 flex overflow-hidden relative z-0">
         {/* LEFT: Question Panel */}
-        <div className="flex-1 p-4 md:p-6 overflow-y-auto bg-white dark:bg-gray-800 m-0 md:m-2 rounded-none md:rounded shadow-sm border-0 md:border border-gray-200 dark:border-gray-700 flex flex-col">
+        <div className="flex-1 flex flex-col bg-white dark:bg-gray-800 m-0 md:m-2 rounded-none md:rounded shadow-sm border-0 md:border border-gray-200 dark:border-gray-700 overflow-hidden relative">
           {q ? (
             <>
-                <div className="flex flex-col sm:flex-row justify-between mb-4 border-b dark:border-gray-700 pb-2 gap-2 shrink-0">
-                    <span className="font-bold text-green-800 dark:text-green-400 text-base md:text-lg">Question {currentQIndex + 1} of {getCurrentQuestions().length}</span>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 md:p-4 border-b dark:border-gray-700 gap-2 shrink-0 bg-white dark:bg-gray-800 z-10">
+                    <span className="font-bold text-green-800 dark:text-green-400 text-sm md:text-lg">Question {currentQIndex + 1} of {getCurrentQuestions().length}</span>
                     <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-1 rounded border border-green-200 dark:border-green-800">{session.examType}</span>
                         <span className="text-gray-400 dark:text-gray-500 font-mono text-[10px] md:text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded w-fit">ID: {q.id.split('-')[0]}...</span>
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto">
-                    <p className="text-base md:text-lg text-gray-800 dark:text-gray-200 leading-relaxed mb-6 md:mb-8 font-medium font-serif">
+                <div className="flex-1 overflow-y-auto p-3 md:p-6 custom-scroll">
+                    <p className="text-base md:text-lg text-gray-800 dark:text-gray-200 leading-relaxed mb-6 font-medium font-serif select-text">
                     {q.text}
                     </p>
 
-                    <div className="space-y-3 pb-4">
+                    <div className="space-y-3 pb-2">
                     {(['A', 'B', 'C', 'D'] as const).map(opt => {
                         const optText = q[`option${opt}` as keyof Question];
                         const isSelected = session.answers[q.id] === opt;
@@ -629,32 +651,34 @@ export const ExamSimulator: React.FC<Props> = ({ session: initialSession, onSubm
                     </div>
                 </div>
 
-                {/* ACTION BAR */}
-                <div className="mt-2 md:mt-4 flex flex-col md:flex-row justify-between items-center pt-2 md:pt-4 border-t dark:border-gray-700 gap-3 md:gap-0 shrink-0 bg-white dark:bg-gray-800">
-                    <div className="flex gap-3 w-full md:w-auto">
-                        <Button 
-                            onClick={() => navigate(-1)} 
-                            disabled={currentQIndex === 0 || isNavigating}
-                            className="flex-1 md:flex-none px-4 md:px-6 py-3 md:py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-200 dark:hover:bg-gray-600 border-gray-300 dark:border-gray-600 text-sm md:text-base justify-center"
-                        >
-                            <ChevronLeft className="inline mr-1" size={18} /> Previous
-                        </Button>
-                        <Button 
-                            onClick={() => navigate(1)}
-                            disabled={currentQIndex === getCurrentQuestions().length - 1 || isNavigating} 
-                            className="flex-1 md:flex-none px-4 md:px-6 py-3 md:py-2 bg-green-700 text-white rounded hover:bg-green-800 text-sm md:text-base justify-center"
-                        >
-                            Next <ChevronRight className="inline ml-1" size={18} />
-                        </Button>
-                    </div>
+                {/* ACTION BAR (Fixed) */}
+                <div className="p-3 md:p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 shrink-0 backdrop-blur-sm">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-3">
+                        <div className="flex gap-3 w-full md:w-auto">
+                            <Button 
+                                onClick={() => navigate(-1)} 
+                                disabled={currentQIndex === 0 || isNavigating}
+                                className={`flex-1 md:flex-none px-4 md:px-6 py-3 md:py-2 text-sm md:text-base justify-center ${currentQIndex === 0 ? 'bg-gray-200 text-gray-400 border-gray-200 dark:bg-gray-700 dark:text-gray-600 dark:border-gray-600 shadow-none' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
+                            >
+                                <ChevronLeft className="inline mr-1" size={18} /> Previous
+                            </Button>
+                            <Button 
+                                onClick={() => navigate(1)}
+                                disabled={currentQIndex === getCurrentQuestions().length - 1 || isNavigating} 
+                                className={`flex-1 md:flex-none px-4 md:px-6 py-3 md:py-2 text-sm md:text-base justify-center ${currentQIndex === getCurrentQuestions().length - 1 ? 'bg-gray-200 text-gray-400 border-gray-200 dark:bg-gray-700 dark:text-gray-600 dark:border-gray-600 shadow-none' : 'bg-green-700 text-white hover:bg-green-800'}`}
+                            >
+                                Next <ChevronRight className="inline ml-1" size={18} />
+                            </Button>
+                        </div>
 
-                    <div className="flex gap-2 w-full md:w-auto">
-                        <button 
-                            onClick={() => toggleReview(q.id)}
-                            className={`flex-1 md:flex-none px-4 py-3 md:py-2 rounded text-sm font-semibold border transition-colors flex items-center justify-center ${session.markedForReview.includes(q.id) ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-200 dark:hover:bg-red-900/50' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'}`}
-                        >
-                            <Flag className="inline mr-1" size={16} /> {session.markedForReview.includes(q.id) ? 'Unmark' : 'Mark Review'}
-                        </button>
+                        <div className="flex gap-2 w-full md:w-auto">
+                            <button 
+                                onClick={() => toggleReview(q.id)}
+                                className={`flex-1 md:flex-none px-4 py-3 md:py-2 rounded text-sm font-semibold border transition-colors flex items-center justify-center ${session.markedForReview.includes(q.id) ? 'bg-red-500 text-white border-red-600 hover:bg-red-600' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'}`}
+                            >
+                                <Flag className="inline mr-1" size={16} /> {session.markedForReview.includes(q.id) ? 'Unmark' : 'Mark Review'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </>
@@ -682,24 +706,7 @@ export const ExamSimulator: React.FC<Props> = ({ session: initialSession, onSubm
            <div className="px-2">
              {renderQuestionGrid()}
            </div>
-
-           <div className="mt-8 px-4 border-t dark:border-gray-700 pt-4">
-              <h4 className="text-xs font-bold text-gray-400 uppercase mb-2">Key</h4>
-              <div className="grid grid-cols-2 gap-2 text-[10px] text-gray-600 dark:text-gray-400">
-                  <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-green-500 rounded border border-green-600"></div> Answered
-                  </div>
-                  <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-white dark:bg-gray-700 border border-gray-400 dark:border-gray-500 rounded"></div> Unanswered
-                  </div>
-                  <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-blue-600 rounded"></div> Current
-                  </div>
-                  <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 rounded"></div> Flagged
-                  </div>
-              </div>
-           </div>
+           <Legend />
         </div>
       </main>
 

@@ -187,6 +187,7 @@ app.post('/api/admin/generate-token', async (req, res) => {
 
 app.post('/api/admin/token-status', async (req, res) => {
     const { tokenCode, isActive } = req.body;
+    if (!tokenCode) return res.status(400).json({ error: "Missing token code" });
     try {
         const { error } = await supabase.from('access_tokens').update({ is_active: isActive }).eq('token_code', tokenCode);
         if (error) throw error;
@@ -196,6 +197,7 @@ app.post('/api/admin/token-status', async (req, res) => {
 
 app.post('/api/admin/reset-token-device', async (req, res) => {
     const { tokenCode } = req.body;
+    if (!tokenCode) return res.status(400).json({ error: "Missing token code" });
     try {
         const { error } = await supabase.from('access_tokens').update({ device_fingerprint: null }).eq('token_code', tokenCode);
         if (error) throw error;

@@ -333,11 +333,8 @@ export const toggleTokenStatus = async (tokenCode: string, isActive: boolean) =>
     updateLocalToken(tokenCode, { is_active: isActive });
 
     if (!FORCE_OFFLINE) {
-        try {
-            return await apiRequest('/api/admin/token-status', 'POST', { tokenCode, isActive });
-        } catch(err: any) {
-            console.warn("Online status toggle failed (saved locally)");
-        }
+        // No try/catch here - let errors bubble up to UI
+        return await apiRequest('/api/admin/token-status', 'POST', { tokenCode, isActive });
     }
     return { success: true };
 };
@@ -347,11 +344,8 @@ export const resetTokenDevice = async (tokenCode: string) => {
     updateLocalToken(tokenCode, { device_fingerprint: null });
 
     if (!FORCE_OFFLINE) {
-        try {
-            return await apiRequest('/api/admin/reset-token-device', 'POST', { tokenCode });
-        } catch(err: any) {
-            console.warn("Online reset failed (saved locally)");
-        }
+        // No try/catch here - let errors bubble up to UI
+        return await apiRequest('/api/admin/reset-token-device', 'POST', { tokenCode });
     }
     return { success: true };
 };
@@ -361,11 +355,8 @@ export const deleteToken = async (tokenCode: string) => {
     deleteLocalToken(tokenCode);
 
     if (!FORCE_OFFLINE) {
-        try {
-            await apiRequest(`/api/admin/tokens/${tokenCode}`, 'DELETE');
-        } catch(err: any) {
-            console.warn("Online delete failed (deleted locally)");
-        }
+        // No try/catch here - let errors bubble up to UI
+        await apiRequest(`/api/admin/tokens/${tokenCode}`, 'DELETE');
     }
     return { success: true };
 };
