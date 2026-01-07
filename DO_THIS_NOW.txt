@@ -1,0 +1,56 @@
+========================================
+DO THIS NOW TO FIX "FAILED TO FETCH" ERROR
+========================================
+
+YOU ARE MISSING: Your backend is not running
+
+SOLUTION IN 3 STEPS:
+
+STEP 1: Open Terminal or Command Prompt
+========================================
+Go to your project folder
+
+STEP 2: Run This Command
+========================================
+npm start
+
+STEP 3: Wait for This Message
+========================================
+"Server running on port 5000"
+
+Once you see that, go to your browser and try adding a subject again.
+
+IT SHOULD WORK NOW!
+
+========================================
+IMPORTANT NOTES
+========================================
+
+1. Keep that terminal open while using the app
+2. You need TWO terminal windows:
+   - Terminal 1: npm start (BACKEND)
+   - Terminal 2: npm run dev (FRONTEND)
+
+3. Don't close the terminal that says "Server running on port 5000"
+
+4. To stop backend: Press Ctrl+C
+
+========================================
+IF STILL NOT WORKING
+========================================
+
+1. Check Terminal 1 for error messages
+2. Read the error message carefully
+3. Common: "Port already in use"
+   Fix: Kill the process or use different port
+
+4. Open browser DevTools (F12)
+5. Go to Console tab
+6. Try adding subject again
+7. Look for error with "[API]" tag
+
+========================================
+
+That's it. Backend must be running.
+
+Run: npm start

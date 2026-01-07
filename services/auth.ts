@@ -63,29 +63,47 @@ const withTimeout = <T>(promise: Promise<T>, ms: number, fallbackError: string =
 const apiRequest = async (endpoint: string, method: string, body?: any) => {
     // Fast fail if we are definitely offline
     if (!navigator.onLine && !FORCE_OFFLINE) {
-        throw new Error("Network offline");
+        throw new Error("Network offline - device has no internet");
     }
 
     if (FORCE_OFFLINE) throw new Error("Offline Mode Enforced");
 
     const url = getApiUrl(endpoint);
+    console.log(`[API] ${method} ${url}`);
+
     try {
         // Reduced timeout to 5s to fail faster to offline mode
         const res = await fetchWithTimeout(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
             body: body ? JSON.stringify(body) : undefined
-        }, 5000); 
-        
+        }, 5000);
+
         const contentType = res.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
-            throw new Error(`Non-JSON response (Status ${res.status})`);
+            console.error(`[API] Non-JSON response from ${url}:`, res.status, res.statusText);
+            throw new Error(`Server Error (Status ${res.status}). Backend may be down. Make sure to run: npm start`);
         }
 
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'API Request Failed');
+        console.log(`[API] ✓ ${method} ${url}`);
         return data;
     } catch (err: any) {
+        const errorMsg = err.message || 'Unknown error';
+
+        // Better error messages for common issues
+        if (errorMsg.includes('Failed to fetch')) {
+            console.error(`[API] FAILED TO FETCH ${url} - Backend not running? Run: npm start`);
+            throw new Error(`Backend unavailable at ${url}. Make sure backend is running:\nnpm start`);
+        }
+
+        if (errorMsg.includes('timeout') || errorMsg.includes('Timeout')) {
+            console.error(`[API] TIMEOUT ${url} - Backend too slow or not responding`);
+            throw new Error(`Request timeout. Backend at ${url} is not responding.\nMake sure to run: npm start`);
+        }
+
+        console.error(`[API] ERROR ${method} ${url}:`, errorMsg);
         throw err;
     }
 };

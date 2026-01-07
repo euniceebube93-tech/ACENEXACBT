@@ -150,11 +150,21 @@ export const addSubject = async (name: string, category: 'General' | 'Science' |
     }
 
     try {
+        console.log('[DB] Adding subject:', name, category);
         const subject = await apiRequest('/api/subjects', 'POST', { name, category, is_compulsory });
+        console.log('[DB] Subject added successfully:', subject);
         await getAllSubjects(); // Refresh cache
         return subject;
     } catch (err: any) {
-        throw new Error(err.message || 'Failed to add subject');
+        const errorMsg = err.message || 'Failed to add subject';
+        console.error('[DB] Error adding subject:', errorMsg);
+
+        // Provide helpful error message
+        if (errorMsg.includes('Backend unavailable') || errorMsg.includes('http://localhost:5000') || errorMsg.includes('npm start')) {
+            throw new Error(`Cannot add subject: Backend is not running.\n\nFix: Open a terminal and run:\n  npm start\n\nThen try adding subject again.`);
+        }
+
+        throw new Error(errorMsg);
     }
 };
 
