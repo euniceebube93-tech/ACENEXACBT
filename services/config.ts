@@ -3,7 +3,7 @@
 
 // Your Backend URL - FOR LOCAL DEVELOPMENT USE LOCALHOST
 export const BACKEND_URL = "http://localhost:5000";
-
+// Your Backend URL - FOR REAL DEVELOPMENT
 export const BACKEND_URL = "https://acenexacbt.onrender.com";
 // SET THIS TO TRUE TO DISABLE BACKEND AND USE LOCAL STORAGE ONLY
 // Change to 'false' when you want to connect to the real server.
